@@ -2,11 +2,11 @@
 #include <ESP8266HTTPClient.h>
 #include <DHT.h>
 
-const char* ssid = "your_SSID";
-const char* password = "your_PASSWORD";
-const char* serverUrl = "http://<FLASK_SERVER_IP>:5000/data"; // Замените <FLASK_SERVER_IP> на IP-адрес вашего сервера
+const char* ssid = "Kvantorium";
+const char* password = "Kvantorium33";
+const char* serverUrl = "http://<Your-Flask-Server-IP>:5000/update_sensor_data"; // замените на IP-адрес вашего сервера Flask
 
-#define DHTPIN D4
+#define DHTPIN 4
 #define DHTTYPE DHT22
 
 DHT dht(DHTPIN, DHTTYPE);
@@ -40,7 +40,8 @@ void loop() {
 void sendDataToServer(float temperature, float humidity) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    http.begin(serverUrl);
+    WiFiClient client;
+    http.begin(client, serverUrl);
     http.addHeader("Content-Type", "application/json");
 
     String postData = "{\"temperature\":" + String(temperature) + ",\"humidity\":" + String(humidity) + "}";

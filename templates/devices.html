@@ -2,18 +2,23 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Главная</title>
+    <title>Управление устройствами</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Добро пожаловать!</h1>
+    <h1>Управление устройствами</h1>
     <div class="sensor-data">
         <p>Температура: {{ temperature if temperature is not none else "N/A" }} °C</p>
         <p>Влажность: {{ humidity if humidity is not none else "N/A" }} %</p>
     </div>
-    <button onclick="location.href='{{ url_for('devices') }}'">Показать устройства</button>
-    <button onclick="location.href='{{ url_for('control') }}'">Управление устройствами</button>
-    <button onclick="location.href='{{ url_for('chat') }}'">Чат-бот</button>
+    <div class="devices">
+        {% for device, state in devices.items() %}
+            <button onclick="location.href='{{ url_for('toggle', device=device) }}'" class="{{ 'on' if state else 'off' }}">
+                {{ device }} ({{ 'Включено' if state else 'Выключено' }})
+            </button>
+        {% endfor %}
+    </div>
+    <button onclick="location.href='{{ url_for('index') }}'">Вернуться на главную</button>
     <div class="weather">
         {% if weather %}
             <p>Погода: {{ weather.description }}</p>

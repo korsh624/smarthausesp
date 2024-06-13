@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Управление устройствами через чат-бота</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Чат-бот управления умным домом</h1>
+    <form method="POST">
+        <input type="text" name="command" placeholder="Введите команду" required>
+        <button type="submit">Отправить</button>
+    </form>
+    {% if response %}
+        <p>Ответ: {{ response }}</p>
+    {% endif %}
+    <button onclick="location.href='{{ url_for('index') }}'">Вернуться на главную</button>
+    <div class="weather">
+        {% if weather %}
+            <p>Погода: {{ weather.description }}</p>
+            <p>Температура: {{ weather.temperature }} °C</p>
+            <p>Влажность: {{ weather.humidity }} %</p>
+        {% else %}
+            <p>Не удалось загрузить данные о погоде</p>
+        {% endif %}
+    </div>
+</body>
+</html>
