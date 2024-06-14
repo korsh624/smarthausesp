@@ -2,33 +2,26 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Умный дом</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Главная</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header>
-        <h1>Умный дом</h1>
-    </header>
-    <main>
-        <section>
-            <h2>Температура и влажность</h2>
-            <p>Температура: {{ temperature }}°C</p>
-            <p>Влажность: {{ humidity }}%</p>
-        </section>
-        <section>
-            <h2>Погода</h2>
-            {% if weather %}
-                <p>Описание: {{ weather.description }}</p>
-                <p>Температура: {{ weather.temperature }}°C</p>
-                <p>Влажность: {{ weather.humidity }}%</p>
-            {% else %}
-                <p>Не удалось загрузить данные о погоде</p>
-            {% endif %}
-        </section>
-    </main>
-    <footer>
-        <button onclick="location.href='{{ url_for('developers') }}'">Разработчики</button>
-    </footer>
+    <h1>Добро пожаловать!</h1>
+    <div class="sensor-data">
+        <p>Температура: {{ temperature if temperature is not none else "N/A" }} °C</p>
+        <p>Влажность: {{ humidity if humidity is not none else "N/A" }} %</p>
+    </div>
+    <button onclick="location.href='{{ url_for('devices') }}'">Показать устройства</button>
+    <button onclick="location.href='{{ url_for('control') }}'">Управление устройствами</button>
+    <button onclick="location.href='{{ url_for('chat') }}'">Чат-бот</button>
+    <div class="weather">
+        {% if weather %}
+            <p>Погода: {{ weather.description }}</p>
+            <p>Температура: {{ weather.temperature }} °C</p>
+            <p>Влажность: {{ weather.humidity }} %</p>
+        {% else %}
+            <p>Не удалось загрузить данные о погоде</p>
+        {% endif %}
+    </div>
 </body>
 </html>

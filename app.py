@@ -46,16 +46,14 @@ bot = SmartHomeBot()
 
 def get_weather_yandex():
     api_key = "demo_yandex_weather_api_key_ca6d09349ba0"
-    url = f"https://api.weather.yandex.ru/v2/informers"
+    city = "Moscow"
+    url = f"https://api.weather.yandex.ru/v2/forecast?city={city}&lang=ru_RU&limit=1&hours=false&extra=false"
+
     headers = {
         "X-Yandex-API-Key": api_key
     }
-    params = {
-        "lat": 55.7558,
-        "lon": 37.6176,
-        "lang": "ru_RU"
-    }
-    response = requests.get(url, headers=headers, params=params)
+
+    response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
         weather_data = response.json()
@@ -115,10 +113,6 @@ def update_sensor_data():
     humidity = data.get('humidity')
     bot.update_sensor_data(temperature, humidity)
     return jsonify({"status": "success"}), 200
-
-@app.route('/developers')
-def developers():
-    return render_template('developers.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
