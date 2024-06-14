@@ -4,6 +4,27 @@
     <meta charset="UTF-8">
     <title>Управление устройствами</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        function toggleDevice(device) {
+            fetch(`/toggle/${device}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Обновляем кнопку после получения ответа
+                    let button = document.getElementById(device.toLowerCase());
+                    button.classList.toggle('on');
+                    button.classList.toggle('off');
+                    button.innerText = `${device} (${data.state ? 'Включено' : 'Выключено'})`;
+                })
+                .catch(error => {
+                    console.error('There has been a problem with your fetch operation:', error);
+                });
+        }
+    </script>
 </head>
 <body>
     <h1>Управление устройствами</h1>
@@ -13,7 +34,7 @@
     </div>
     <div class="devices">
         {% for device, state in devices.items() %}
-            <button onclick="location.href='{{ url_for('toggle', device=device) }}'" class="{{ 'on' if state else 'off' }}">
+            <button id="{{ device|lower }}" onclick="toggleDevice('{{ device }}')" class="{{ 'on' if state else 'off' }}">
                 {{ device }} ({{ 'Включено' if state else 'Выключено' }})
             </button>
         {% endfor %}
