@@ -2,14 +2,19 @@
 #include <ESP8266HTTPClient.h>
 #include <DHT.h>
 
-const char* ssid = "Kvantorium";
-const char* password = "Kvantorium33";
-const char* serverUrl = "http://<Your-Flask-Server-IP>:5000/update_sensor_data"; // замените на IP-адрес вашего сервера Flask
+const char* ssid = "sweet_home";
+const char* password = "gelendvagen94";
+const char* serverUrl = "http://127.0.0.1:5000/";  // замените на IP-адрес вашего сервера Flask
 
 #define DHTPIN 4
 #define DHTTYPE DHT22
 
 DHT dht(DHTPIN, DHTTYPE);
+
+// Пины для управления устройствами
+const int lightPin = 12;
+const int acPin = 13;
+const int heaterPin = 14;
 
 void setup() {
   Serial.begin(115200);
@@ -22,6 +27,20 @@ void setup() {
   Serial.println("Connected to WiFi");
 
   dht.begin();
+
+  // Инициализация пинов для управления устройствами
+  pinMode(lightPin, OUTPUT);
+  pinMode(acPin, OUTPUT);
+  pinMode(heaterPin, OUTPUT);
+
+  // Изначально выключаем все устройства
+  digitalWrite(lightPin, LOW);
+  digitalWrite(acPin, LOW);
+  digitalWrite(heaterPin, LOW);
+
+  // Пример запланированных действий
+  scheduleTurnOnDevice("Свет", 10);  // Включить свет через 10 секунд
+  scheduleTurnOffDevice("Обогреватель", 20);  // Выключить обогреватель через 20 секунд
 }
 
 void loop() {
@@ -34,7 +53,7 @@ void loop() {
   }
 
   sendDataToServer(temperature, humidity);
-  delay(60000); // Измерения каждые 60 секунд
+  delay(60000);  // Измерения каждые 60 секунд
 }
 
 void sendDataToServer(float temperature, float humidity) {
@@ -51,6 +70,8 @@ void sendDataToServer(float temperature, float humidity) {
       String response = http.getString();
       Serial.println(httpResponseCode);
       Serial.println(response);
+
+      handleServerResponse(response);
     } else {
       Serial.print("Error on sending POST: ");
       Serial.println(httpResponseCode);
@@ -59,4 +80,59 @@ void sendDataToServer(float temperature, float humidity) {
   } else {
     Serial.println("WiFi Disconnected");
   }
+}
+
+void handleServerResponse(String response) {
+  // Обрабатываем ответ от сервера Flask
+  if (response.indexOf("\"Свет\":true") > 0) {
+    digitalWrite(lightPin, HIGH);
+  } else {
+    digitalWrite(lightPin, LOW);
+  }
+
+  if (response.indexOf("\"Кондиционер\":true") > 0) {
+    digitalWrite(acPin, HIGH);
+  } else {
+    digitalWrite(acPin, LOW);
+  }
+
+  if (response.indexOf("\"Обогреватель\":true") > 0) {
+    digitalWrite(heaterPin, HIGH);
+  } else {
+    digitalWrite(heaterPin, LOW);
+  }
+}
+
+void turnOnDevice(String device) {
+  // Включение устройства по имени
+  if (device == "Свет") {
+    digitalWrite(lightPin, HIGH);
+  } else if (device == "Кондиционер") {
+    digitalWrite(acPin, HIGH);
+  } else if (device == "Обогреватель") {
+    digitalWrite(heaterPin, HIGH);
+  }
+}
+
+void turnOffDevice(String device) {
+  // Выключение устройства по имени
+  if (device == "Свет") {
+    digitalWrite(lightPin, LOW);
+  } else if (device == "Кондиционер") {
+    digitalWrite(acPin, LOW);
+  } else if (device == "Обогреватель") {
+    digitalWrite(heaterPin, LOW);
+  }
+}
+
+void scheduleTurnOnDevice(String device, unsigned long delaySeconds) {
+  // Запланированное включение устройства через delaySeconds секунд
+  delay(delaySeconds * 1000);
+  turnOnDevice(device);
+}
+
+void scheduleTurnOffDevice(String device, unsigned long delaySeconds) {
+  // Запланированное выключение устройства через delaySeconds секунд
+  delay(delaySeconds * 1000);
+  turnOffDevice(device);
 }

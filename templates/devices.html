@@ -5,36 +5,43 @@
     <title>Управление устройствами</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script>
+        function fetchDeviceStates() {
+            fetch('/device_states')
+                .then(response => response.json())
+                .then(data => {
+                    for (const [device, state] of Object.entries(data)) {
+                        const button = document.getElementById(device);
+                        button.className = state ? 'on' : 'off';
+                        button.textContent = `${device} (${state ? 'Включено' : 'Выключено'})`;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
         function toggleDevice(device) {
             fetch(`/toggle/${device}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    // Обновляем кнопку после получения ответа
-                    let button = document.getElementById(device.toLowerCase());
-                    button.classList.toggle('on');
-                    button.classList.toggle('off');
-                    button.innerText = `${device} (${data.state ? 'Включено' : 'Выключено'})`;
+                    fetchDeviceStates();
                 })
-                .catch(error => {
-                    console.error('There has been a problem with your fetch operation:', error);
-                });
+                .catch(error => console.error('Error:', error));
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchDeviceStates();
+            setInterval(fetchDeviceStates, 5000); // Обновление данных каждые 5 секунд
+        });
     </script>
 </head>
 <body>
     <h1>Управление устройствами</h1>
     <div class="sensor-data">
-        <p>Температура: {{ temperature if temperature is not none else "N/A" }} °C</p>
-        <p>Влажность: {{ humidity if humidity is not none else "N/A" }} %</p>
+        <p>Температура: <span id="temperature">{{ temperature if temperature is not none else "N/A" }} °C</span></p>
+        <p>Влажность: <span id="humidity">{{ humidity if humidity is not none else "N/A" }} %</span></p>
     </div>
     <div class="devices">
         {% for device, state in devices.items() %}
-            <button id="{{ device|lower }}" onclick="toggleDevice('{{ device }}')" class="{{ 'on' if state else 'off' }}">
+            <button id="{{ device }}" onclick="toggleDevice('{{ device }}')" class="{{ 'on' if state else 'off' }}">
                 {{ device }} ({{ 'Включено' if state else 'Выключено' }})
             </button>
         {% endfor %}

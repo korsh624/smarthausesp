@@ -12,7 +12,6 @@
         <p>Влажность: {{ humidity if humidity is not none else "N/A" }} %</p>
     </div>
     <button onclick="location.href='{{ url_for('devices') }}'">Показать устройства</button>
-    <button onclick="location.href='{{ url_for('control') }}'">Управление устройствами</button>
     <button onclick="location.href='{{ url_for('chat') }}'">Чат-бот</button>
     <div class="weather">
         {% if weather %}
