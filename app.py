@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, jsonify
+from flask import Flask, render_template, request, jsonify
 import requests
 import re
 from threading import Timer
@@ -38,9 +38,9 @@ class SmartHomeBot:
             response = self.turn_on_device(command)
         elif command.startswith("выключи"):
             response = self.turn_off_device(command)
-        elif command.startswith("выключи через"):
+        elif "выключи через" in command:
             response = self.schedule_turn_off(command)
-        elif command.startswith("включи через"):
+        elif "включи через" in command:
             response = self.schedule_turn_on(command)
         elif command.startswith("подогрей до"):
             response = self.set_heater_temperature(command)
@@ -64,29 +64,29 @@ class SmartHomeBot:
         return "Устройство не найдено."
 
     def schedule_turn_off(self, command):
-        match = re.search(r'\bвыключи через (\d+) час(?:а|ов|ами)? (\d+) минут(?:ы|у|а|ой|ут)? (\d+) секунд(?:ы|у|а|ой|ут)?\b', command)
+        match = re.search(r'выключи через (\d+)\s*час(?:а|ов|ами)?\s*(\d+)?\s*минут(?:ы|у|а|ой|ут)?\s*(\d+)?\s*секунд(?:ы|у|а|ой|ут)?', command)
         if match:
-            hours = int(match.group(1))
-            minutes = int(match.group(2))
-            seconds = int(match.group(3))
+            hours = int(match.group(1)) if match.group(1) else 0
+            minutes = int(match.group(2)) if match.group(2) else 0
+            seconds = int(match.group(3)) if match.group(3) else 0
             total_seconds = hours * 3600 + minutes * 60 + seconds
             Timer(total_seconds, self._turn_off_all_devices).start()
             return f"Выключу устройства через {hours} часов, {minutes} минут, {seconds} секунд."
         return "Неверный формат команды."
 
     def schedule_turn_on(self, command):
-        match = re.search(r'\bвключи через (\d+) час(?:а|ов|ами)? (\d+) минут(?:ы|у|а|ой|ут)? (\д+) секунд(?:ы|у|а|ой|ут)?\b', command)
+        match = re.search(r'включи через (\d+)\s*час(?:а|ов|ами)?\s*(\d+)?\с*минут(?:ы|у|а|ой|ут)?\с*(\д+)?\с*секунд(?:ы|у|а|ой|ут)?', command)
         if match:
-            hours = int(match.group(1))
-            minutes = int(match.group(2))
-            seconds = int(match.group(3))
+            hours = int(match.group(1)) if match.group(1) else 0
+            minutes = int(match.group(2)) if match.group(2) else 0
+            seconds = int(match.group(3)) if match.group(3) else 0
             total_seconds = hours * 3600 + minutes * 60 + seconds
             Timer(total_seconds, self._turn_on_all_devices).start()
             return f"Включу устройства через {hours} часов, {minutes} минут, {seconds} секунд."
         return "Неверный формат команды."
 
     def set_heater_temperature(self, command):
-        match = re.search(r'\bподогрей до (\д+) градус(?:а|ов|ами)?\b', command)
+        match = re.search(r'подогрей до (\д+) градус(?:а|ов|ами)?', command)
         if match:
             temperature = int(match.group(1))
             self.devices["Обогреватель"] = True
@@ -95,7 +95,7 @@ class SmartHomeBot:
         return "Неверный формат команды."
 
     def set_ac_temperature(self, command):
-        match = re.search(r'\bохлади до (\д+) градус(?:а|ов|ами)?\b', command)
+        match = re.search(r'охлади до (\д+) градус(?:а|ов|ами)?', command)
         if match:
             temperature = int(match.group(1))
             self.devices["Кондиционер"] = True
@@ -137,7 +137,7 @@ def get_weather_yandex():
 
     response = requests.get(url, headers=headers)
 
-    if (response.status_code == 200):
+    if response.status_code == 200:
         weather_data = response.json()
         fact = weather_data["fact"]
         temperature = fact["temp"]
@@ -225,6 +225,15 @@ def update_sensor_data():
 @app.route('/device_states', methods=['GET'])
 def device_states():
     return jsonify(bot.devices)
+
+@app.route('/get_sensor_data', methods=['GET'])
+def get_sensor_data():
+    return jsonify({"temperature": bot.temperature, "humidity": bot.humidity})
+
+@app.route('/home_environment')
+def home_environment():
+    weather = get_weather_yandex()
+    return render_template('home_environment.html', temperature=bot.temperature, humidity=bot.humidity, weather=weather)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Домашняя среда</title>
+    <style>
+        .container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-start;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .weather-container {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-left: auto; /* Правый край */
+            margin-top: 10px; /* Верхний край */
+            width: 300px; /* Ширина контейнера с погодой */
+        }
+
+        .sensor-data {
+            margin-left: 20px; /* Отступ от контейнера с погодой */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="weather-container">
+            <h2>Погода</h2>
+            {% if weather %}
+                <p>Описание: {{ weather.description }}</p>
+                <p>Температура: {{ weather.temperature }}°C</p>
+                <p>Влажность: {{ weather.humidity }}%</p>
+            {% else %}
+                <p>Не удалось получить данные о погоде.</p>
+            {% endif %}
+        </div>
+
+        <div class="sensor-data">
+            <h2>Данные сенсоров</h2>
+            {% if temperature is not none and humidity is not none %}
+                <p>Температура в доме: {{ temperature }}°C</p>
+                <p>Влажность в доме: {{ humidity }}%</p>
+            {% else %}
+                <p>Данные сенсоров недоступны.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

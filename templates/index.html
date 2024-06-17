@@ -7,12 +7,9 @@
 </head>
 <body>
     <h1>Добро пожаловать!</h1>
-    <div class="sensor-data">
-        <p>Температура: {{ temperature if temperature is not none else "N/A" }} °C</p>
-        <p>Влажность: {{ humidity if humidity is not none else "N/A" }} %</p>
-    </div>
     <button onclick="location.href='{{ url_for('devices') }}'">Показать устройства</button>
     <button onclick="location.href='{{ url_for('chat') }}'">Чат-бот</button>
+    <button class="button" onclick="location.href='{{ url_for('home_environment') }}'">Температура и влажность дома</button>
     <div class="weather">
         {% if weather %}
             <p>Погода: {{ weather.description }}</p>
