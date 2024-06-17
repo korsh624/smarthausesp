@@ -3,8 +3,8 @@
 #include <DHT.h>
 
 const char* ssid = "sweet_home";
-const char* password = "gelendvagen94";
-const char* serverUrl = "http://127.0.0.1:5000/";  // замените на IP-адрес вашего сервера Flask
+const char* password = "gelenvagen94";
+const char* serverUrl = "http://127.0.0.1:5000/home_environment";  // замените на IP-адрес вашего сервера Flask
 
 #define DHTPIN 4
 #define DHTTYPE DHT22
@@ -46,7 +46,6 @@ void setup() {
 void loop() {
   float temperature = dht.readTemperature();
   float humidity = dht.readHumidity();
-
   if (isnan(temperature) || isnan(humidity)) {
     Serial.println("Failed to read from DHT sensor!");
     return;

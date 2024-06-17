@@ -63,9 +63,19 @@ p {
 }
 
 .sensor-data {
-    margin: 20px 0;
+    margin: 20px auto; /* Центрирование данных с сенсоров */
+    max-width: 600px; /* Максимальная ширина контейнера */
     font-size: 18px;
     color: #333;
+}
+
+.sensor-data h1 {
+    margin-bottom: 40px; /* Увеличенный отступ между заголовком и показаниями */
+}
+
+.sensor-data p {
+    font-size: 24px; /* Увеличенный размер шрифта для показаний */
+    margin: 10px 0; /* Отступы между показаниями */
 }
 
 .weather {

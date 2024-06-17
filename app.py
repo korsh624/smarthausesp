@@ -128,7 +128,7 @@ class SmartHomeBot:
 
 def get_weather_yandex():
     api_key = "demo_yandex_weather_api_key_ca6d09349ba0"
-    city = "Moscow"
+    city = "Vladimir"
     url = f"https://api.weather.yandex.ru/v2/forecast?city={city}&lang=ru_RU&limit=1&hours=false&extra=false"
 
     headers = {
@@ -236,4 +236,4 @@ def home_environment():
     return render_template('home_environment.html', temperature=bot.temperature, humidity=bot.humidity, weather=weather)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
