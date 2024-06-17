@@ -53,7 +53,12 @@ void loop() {
   }
 
   sendDataToServer(temperature, humidity);
-  delay(60000);  // Измерения каждые 60 секунд
+  delay(1);  // Измерения каждые 60 секунд
+  handleServerResponse;
+  turnOnDevice;
+  turnOffDevice;
+  scheduleTurnOnDevice;
+  scheduleTurnOffDevice;
 }
 
 void sendDataToServer(float temperature, float humidity) {
