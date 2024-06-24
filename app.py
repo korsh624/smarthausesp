@@ -75,7 +75,7 @@ class SmartHomeBot:
         return "Неверный формат команды."
 
     def schedule_turn_on(self, command):
-        match = re.search(r'включи через (\d+)\s*час(?:а|ов|ами)?\s*(\d+)?\с*минут(?:ы|у|а|ой|ут)?\с*(\д+)?\с*секунд(?:ы|у|а|ой|ут)?', command)
+        match = re.search(r'включи через (\d+)\s*час(?:а|ов|ами)?\s*(\d+)?\s*минут(?:ы|у|а|ой|ут)?\s*(\д+)?\s*секунд(?:ы|у|а|ой|ут)?', command)
         if match:
             hours = int(match.group(1)) if match.group(1) else 0
             minutes = int(match.group(2)) if match.group(2) else 0
@@ -230,8 +230,15 @@ def device_states():
 def get_sensor_data():
     return jsonify({"temperature": bot.temperature, "humidity": bot.humidity})
 
-@app.route('/home_environment')
+@app.route('/home_environment', methods=['GET', 'POST'])
 def home_environment():
+    if request.method == 'POST':
+        data = request.get_json()
+        temperature = data.get('temperature')
+        humidity = data.get('humidity')
+        bot.update_sensor_data(temperature, humidity)
+        return jsonify({"status": "success"}), 200
+
     weather = get_weather_yandex()
     return render_template('home_environment.html', temperature=bot.temperature, humidity=bot.humidity, weather=weather)
 

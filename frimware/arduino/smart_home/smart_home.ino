@@ -4,7 +4,7 @@
 
 const char* ssid = "sweet_home";
 const char* password = "gelenvagen94";
-const char* serverUrl = "http://127.0.0.1:5000/home_environment";  // замените на IP-адрес вашего сервера Flask
+const char* serverUrl = "http://192.168.0.164:5000/home_environment";  // замените на IP-адрес вашего сервера Flask
 
 #define DHTPIN 4
 #define DHTTYPE DHT22
@@ -15,6 +15,9 @@ DHT dht(DHTPIN, DHTTYPE);
 const int lightPin = 12;
 const int acPin = 13;
 const int heaterPin = 14;
+
+unsigned long lastSendTime = 0;
+unsigned long sendInterval = 60000;  // 60 секунд
 
 void setup() {
   Serial.begin(115200);
@@ -37,27 +40,23 @@ void setup() {
   digitalWrite(lightPin, LOW);
   digitalWrite(acPin, LOW);
   digitalWrite(heaterPin, LOW);
-
-  // Пример запланированных действий
-  scheduleTurnOnDevice("Свет", 10);  // Включить свет через 10 секунд
-  scheduleTurnOffDevice("Обогреватель", 20);  // Выключить обогреватель через 20 секунд
 }
 
 void loop() {
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
-  if (isnan(temperature) || isnan(humidity)) {
-    Serial.println("Failed to read from DHT sensor!");
-    return;
-  }
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastSendTime >= sendInterval) {
+    lastSendTime = currentMillis;
 
-  sendDataToServer(temperature, humidity);
-  delay(1);  // Измерения каждые 60 секунд
-  handleServerResponse;
-  turnOnDevice;
-  turnOffDevice;
-  scheduleTurnOnDevice;
-  scheduleTurnOffDevice;
+    float temperature = dht.readTemperature();
+    float humidity = dht.readHumidity();
+
+    if (isnan(temperature) || isnan(humidity)) {
+      Serial.println("Failed to read from DHT sensor!");
+      return;
+    }
+
+    sendDataToServer(temperature, humidity);
+  }
 }
 
 void sendDataToServer(float temperature, float humidity) {
