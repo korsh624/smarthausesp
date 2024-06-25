@@ -15,14 +15,12 @@ class SmartHomeBot:
             "Духовка": False,
             "Холодильник": False,
             "Микроволновка": False,
-            "Стиральная машина": False
+            "Стиральная машина": False,
+            "Увлажнитель": False
         }
         self.temperature = None
         self.humidity = None
-        self.auto_off_conditions = {
-            "Обогреватель": {"temperature": None, "humidity": None},
-            "Кондиционер": {"temperature": None, "humidity": None}
-        }
+        self.auto_mode = False
 
     def toggle_device(self, device):
         if device in self.devices:
@@ -46,6 +44,14 @@ class SmartHomeBot:
             response = self.set_heater_temperature(command)
         elif command.startswith("охлади до"):
             response = self.set_ac_temperature(command)
+        elif command == "авто":
+            response = self.enable_auto_mode()
+        elif command == "автомод выключить":
+            response = self.disable_auto_mode()
+        elif command == "список команд":
+            response = self.list_commands()
+        elif command.startswith("настрой авто"):
+            response = self.configure_auto_mode(command)
 
         return response
 
@@ -75,7 +81,7 @@ class SmartHomeBot:
         return "Неверный формат команды."
 
     def schedule_turn_on(self, command):
-        match = re.search(r'включи через (\d+)\s*час(?:а|ов|ами)?\s*(\d+)?\s*минут(?:ы|у|а|ой|ут)?\s*(\д+)?\s*секунд(?:ы|у|а|ой|ут)?', command)
+        match = re.search(r'включи через (\d+)\s*час(?:а|ов|ами)?\s*(\d+)?\s*минут(?:ы|у|а|ой|ут)?\s*(\d+)?\s*секунд(?:ы|у|а|ой|ут)?', command)
         if match:
             hours = int(match.group(1)) if match.group(1) else 0
             minutes = int(match.group(2)) if match.group(2) else 0
@@ -86,27 +92,76 @@ class SmartHomeBot:
         return "Неверный формат команды."
 
     def set_heater_temperature(self, command):
-        match = re.search(r'подогрей до (\д+) градус(?:а|ов|ами)?', command)
+        match = re.search(r'подогрей до (\d+) градус(?:а|ов|ами)?', command)
         if match:
             temperature = int(match.group(1))
             self.devices["Обогреватель"] = True
-            self.auto_off_conditions["Обогреватель"]["temperature"] = temperature
             return f"Подогреваю до {temperature} градусов."
         return "Неверный формат команды."
 
     def set_ac_temperature(self, command):
-        match = re.search(r'охлади до (\д+) градус(?:а|ов|ами)?', command)
+        match = re.search(r'охлади до (\d+) градус(?:а|ов|ами)?', command)
         if match:
             temperature = int(match.group(1))
             self.devices["Кондиционер"] = True
-            self.auto_off_conditions["Кондиционер"]["temperature"] = temperature
             return f"Охлаждаю до {temperature} градусов."
+        return "Неверный формат команды."
+
+    def list_commands(self):
+        commands = """
+        Доступные команды:
+        1. Включи [устройство]
+        2. Выключи [устройство]
+        3. Включи через [часы] часов [минуты] минут [секунды] секунд
+        4. Выключи через [часы] часов [минуты] минут [секунды] секунд
+        5. Подогрей до [температура] градусов
+        6. Охлади до [температура] градусов
+        7. Авто
+        8. Автомод выключить
+        9. Список команд
+        10. Настрой авто [температура кондиционера] [температура обогревателя] [влажность увлажнителя]
+        """
+        return commands.strip()
+
+    def configure_auto_mode(self, command):
+        match = re.search(r'настрой авто (\d+) (\d+) (\d+)', command)
+        if match:
+            ac_temp = int(match.group(1))
+            heater_temp = int(match.group(2))
+            humidifier_humidity = int(match.group(3))
+
+            return f"Настройки авто: Кондиционер {ac_temp}°C, Обогреватель {heater_temp}°C, Увлажнитель {humidifier_humidity}%."
         return "Неверный формат команды."
 
     def update_sensor_data(self, temperature, humidity):
         self.temperature = temperature
         self.humidity = humidity
-        self.check_auto_off_devices()
+        if self.auto_mode:
+            self.check_auto_mode_conditions()
+
+    def enable_auto_mode(self):
+        self.auto_mode = True
+        return "Автоматический режим включен."
+
+    def disable_auto_mode(self):
+        self.auto_mode = False
+        return "Автоматический режим выключен."
+
+    def check_auto_mode_conditions(self):
+        if self.temperature is not None and self.humidity is not None:
+            if self.temperature > 25:
+                self.devices["Кондиционер"] = True
+                self.devices["Обогреватель"] = False
+            elif self.temperature < 20:
+                self.devices["Кондиционер"] = False
+            if self.temperature < 15:
+                self.devices["Обогреватель"] = True
+            elif self.temperature >= 20:
+                self.devices["Обогреватель"] = False
+            if self.humidity < 50:
+                self.devices["Увлажнитель"] = True
+            else:
+                self.devices["Увлажнитель"] = False
 
     def schedule_action(self, delay_seconds, action):
         timer = Timer(delay_seconds, action)
@@ -119,12 +174,6 @@ class SmartHomeBot:
     def _turn_on_all_devices(self):
         for device in self.devices:
             self.devices[device] = True
-
-    def check_auto_off_devices(self):
-        for device, conditions in self.auto_off_conditions.items():
-            if conditions["temperature"] is not None and conditions["humidity"] is not None:
-                if self.temperature == conditions["temperature"] and self.humidity == conditions["humidity"]:
-                    self.devices[device] = False
 
 def get_weather_yandex():
     api_key = "demo_yandex_weather_api_key_ca6d09349ba0"

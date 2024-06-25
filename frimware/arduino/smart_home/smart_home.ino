@@ -4,20 +4,21 @@
 
 const char* ssid = "sweet_home";
 const char* password = "gelenvagen94";
-const char* serverUrl = "http://192.168.0.164:5000/home_environment";  // замените на IP-адрес вашего сервера Flask
+const char* serverUrl = "http://192.168.0.11:5000/home_environment";  // IP-адрес вашего сервера Flask для данных о температуре и влажности
+const char* devicesUrl = "http://192.168.0.11:5000/devices";  // IP-адрес вашего сервера Flask для данных о состоянии устройств
 
-#define DHTPIN 4
+#define DHTPIN 5
 #define DHTTYPE DHT22
 
 DHT dht(DHTPIN, DHTTYPE);
 
-// Пины для управления устройствами
-const int lightPin = 12;
-const int acPin = 13;
-const int heaterPin = 14;
+// Пины для управления реле
+const int lightPin = 14;
+const int acPin = 0;
+const int heaterPin = 4;
 
 unsigned long lastSendTime = 0;
-unsigned long sendInterval = 60000;  // 60 секунд
+unsigned long sendInterval = 2000;  // 2 секунды
 
 void setup() {
   Serial.begin(115200);
@@ -31,15 +32,15 @@ void setup() {
 
   dht.begin();
 
-  // Инициализация пинов для управления устройствами
+  // Инициализация пинов для управления реле
   pinMode(lightPin, OUTPUT);
   pinMode(acPin, OUTPUT);
   pinMode(heaterPin, OUTPUT);
 
   // Изначально выключаем все устройства
-  digitalWrite(lightPin, LOW);
-  digitalWrite(acPin, LOW);
-  digitalWrite(heaterPin, LOW);
+  digitalWrite(lightPin, HIGH);    // Выключено на LOW, включено на HIGH
+  digitalWrite(acPin, HIGH);       // Выключено на LOW, включено на HIGH
+  digitalWrite(heaterPin, HIGH);   // Выключено на LOW, включено на HIGH
 }
 
 void loop() {
@@ -47,6 +48,7 @@ void loop() {
   if (currentMillis - lastSendTime >= sendInterval) {
     lastSendTime = currentMillis;
 
+    // Читаем данные с датчика DHT
     float temperature = dht.readTemperature();
     float humidity = dht.readHumidity();
 
@@ -55,7 +57,11 @@ void loop() {
       return;
     }
 
+    // Отправляем данные о температуре и влажности на сервер serverUrl
     sendDataToServer(temperature, humidity);
+
+    // Получаем состояние устройств с сервера devicesUrl
+    getDevicesState();
   }
 }
 
@@ -74,7 +80,8 @@ void sendDataToServer(float temperature, float humidity) {
       Serial.println(httpResponseCode);
       Serial.println(response);
 
-      handleServerResponse(response);
+      // Обработка ответа от сервера для данных о температуре и влажности
+      // В данном примере эту часть можно оставить пустой, так как обработка не требуется
     } else {
       Serial.print("Error on sending POST: ");
       Serial.println(httpResponseCode);
@@ -85,57 +92,49 @@ void sendDataToServer(float temperature, float humidity) {
   }
 }
 
-void handleServerResponse(String response) {
-  // Обрабатываем ответ от сервера Flask
-  if (response.indexOf("\"Свет\":true") > 0) {
-    digitalWrite(lightPin, HIGH);
+void getDevicesState() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    WiFiClient client;
+    http.begin(client, devicesUrl);
+
+    int httpResponseCode = http.GET();
+
+    if (httpResponseCode > 0) {
+      String response = http.getString();
+      Serial.println(httpResponseCode);
+      Serial.println(response);
+
+      // Обработка ответа от сервера для данных о состоянии устройств
+      handleDeviceStateResponse(response);
+    } else {
+      Serial.print("Error on getting devices state: ");
+      Serial.println(httpResponseCode);
+    }
+    http.end();
   } else {
-    digitalWrite(lightPin, LOW);
+    Serial.println("WiFi Disconnected");
+  }
+}
+
+void handleDeviceStateResponse(String response) {
+  // Обрабатываем ответ от сервера Flask для данных о состоянии устройств
+  // Проверяем состояние устройств по русским названиям
+  if (response.indexOf("\"Свет\":true") > 0) {
+    digitalWrite(lightPin, LOW);   // Включено на LOW
+  } else {
+    digitalWrite(lightPin, HIGH);  // Выключено на HIGH
   }
 
   if (response.indexOf("\"Кондиционер\":true") > 0) {
-    digitalWrite(acPin, HIGH);
+    digitalWrite(acPin, LOW);      // Включено на LOW
   } else {
-    digitalWrite(acPin, LOW);
+    digitalWrite(acPin, HIGH);     // Выключено на HIGH
   }
 
   if (response.indexOf("\"Обогреватель\":true") > 0) {
-    digitalWrite(heaterPin, HIGH);
+    digitalWrite(heaterPin, LOW);  // Включено на LOW
   } else {
-    digitalWrite(heaterPin, LOW);
+    digitalWrite(heaterPin, HIGH); // Выключено на HIGH
   }
-}
-
-void turnOnDevice(String device) {
-  // Включение устройства по имени
-  if (device == "Свет") {
-    digitalWrite(lightPin, HIGH);
-  } else if (device == "Кондиционер") {
-    digitalWrite(acPin, HIGH);
-  } else if (device == "Обогреватель") {
-    digitalWrite(heaterPin, HIGH);
-  }
-}
-
-void turnOffDevice(String device) {
-  // Выключение устройства по имени
-  if (device == "Свет") {
-    digitalWrite(lightPin, LOW);
-  } else if (device == "Кондиционер") {
-    digitalWrite(acPin, LOW);
-  } else if (device == "Обогреватель") {
-    digitalWrite(heaterPin, LOW);
-  }
-}
-
-void scheduleTurnOnDevice(String device, unsigned long delaySeconds) {
-  // Запланированное включение устройства через delaySeconds секунд
-  delay(delaySeconds * 1000);
-  turnOnDevice(device);
-}
-
-void scheduleTurnOffDevice(String device, unsigned long delaySeconds) {
-  // Запланированное выключение устройства через delaySeconds секунд
-  delay(delaySeconds * 1000);
-  turnOffDevice(device);
 }
