@@ -46,7 +46,7 @@ class SmartHomeBot:
             response = self.set_ac_temperature(command)
         elif command == "авто":
             response = self.enable_auto_mode()
-        elif command == "автомод выключить":
+        elif command == "авто выключить":
             response = self.disable_auto_mode()
         elif command == "список команд":
             response = self.list_commands()
@@ -70,7 +70,7 @@ class SmartHomeBot:
         return "Устройство не найдено."
 
     def schedule_turn_off(self, command):
-        match = re.search(r'выключи через (\d+)\s*час(?:а|ов|ами)?\s*(\d+)?\s*минут(?:ы|у|а|ой|ут)?\s*(\d+)?\s*секунд(?:ы|у|а|ой|ут)?', command)
+        match = re.search(r'выключи через (\d+)\s*час(?:а|ов|ами)?\s*(\d+)?\s*минут(?:ы|у|а|ой|ут)?\s*(\d+)?\с*секунд(?:ы|у|а|ой|ут)?', command)
         if match:
             hours = int(match.group(1)) if match.group(1) else 0
             minutes = int(match.group(2)) if match.group(2) else 0
@@ -81,7 +81,7 @@ class SmartHomeBot:
         return "Неверный формат команды."
 
     def schedule_turn_on(self, command):
-        match = re.search(r'включи через (\d+)\s*час(?:а|ов|ами)?\s*(\d+)?\s*минут(?:ы|у|а|ой|ут)?\s*(\d+)?\s*секунд(?:ы|у|а|ой|ут)?', command)
+        match = re.search(r'включи через (\д+)\с*час(?:а|ов|ами)?\с*(\д+)?\с*минут(?:ы|у|а|ой|ут)?\с*(\д+)?\с*секунд(?:ы|у|а|ой|ут)?', command)
         if match:
             hours = int(match.group(1)) if match.group(1) else 0
             minutes = int(match.group(2)) if match.group(2) else 0
@@ -92,7 +92,7 @@ class SmartHomeBot:
         return "Неверный формат команды."
 
     def set_heater_temperature(self, command):
-        match = re.search(r'подогрей до (\d+) градус(?:а|ов|ами)?', command)
+        match = re.search(r'подогрей до (\д+) градус(?:а|ов|ами)?', command)
         if match:
             temperature = int(match.group(1))
             self.devices["Обогреватель"] = True
@@ -100,7 +100,7 @@ class SmartHomeBot:
         return "Неверный формат команды."
 
     def set_ac_temperature(self, command):
-        match = re.search(r'охлади до (\d+) градус(?:а|ов|ами)?', command)
+        match = re.search(r'охлади до (\д+) градус(?:а|ов|ами)?', command)
         if match:
             temperature = int(match.group(1))
             self.devices["Кондиционер"] = True
@@ -117,20 +117,20 @@ class SmartHomeBot:
         5. Подогрей до [температура] градусов
         6. Охлади до [температура] градусов
         7. Авто
-        8. Автомод выключить
+        8. Выключить авто
         9. Список команд
         10. Настрой авто [температура кондиционера] [температура обогревателя] [влажность увлажнителя]
         """
         return commands.strip()
 
     def configure_auto_mode(self, command):
-        match = re.search(r'настрой авто (\d+) (\d+) (\d+)', command)
+        match = re.search(r'настрой авто (\д+) (\д+) (\д+)', command)
         if match:
             ac_temp = int(match.group(1))
             heater_temp = int(match.group(2))
             humidifier_humidity = int(match.group(3))
 
-            return f"Настройки авто: Кондиционер {ac_temp}°C, Обогреватель {heater_temp}°C, Увлажнитель {humidifier_humidity}%."
+            return f"Авто настройки: Кондиционер {ac_temp}°C, Обогреватель {heater_temp}°C, Увлажнитель {humidifier_humidity}%."
         return "Неверный формат команды."
 
     def update_sensor_data(self, temperature, humidity):
@@ -293,3 +293,4 @@ def home_environment():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+

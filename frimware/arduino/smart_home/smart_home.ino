@@ -1,11 +1,11 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
+#include <ArduinoJson.h>  // Для работы с JSON
 #include <DHT.h>
 
 const char* ssid = "sweet_home";
 const char* password = "gelenvagen94";
-const char* serverUrl = "http://192.168.0.11:5000/home_environment";  // IP-адрес вашего сервера Flask для данных о температуре и влажности
-const char* devicesUrl = "http://192.168.0.11:5000/devices";  // IP-адрес вашего сервера Flask для данных о состоянии устройств
+const char* devicesUrl = "http://192.168.0.11:5000/device_states";  // URL для получения данных о состоянии устройств
 
 #define DHTPIN 5
 #define DHTTYPE DHT22
@@ -13,9 +13,10 @@ const char* devicesUrl = "http://192.168.0.11:5000/devices";  // IP-адрес �
 DHT dht(DHTPIN, DHTTYPE);
 
 // Пины для управления реле
-const int lightPin = 14;
-const int acPin = 0;
-const int heaterPin = 4;
+const int lightPin = 12;
+const int acPin = 13;
+const int heaterPin = 14;
+const int humidifierPin = 2;  // Пин для управления увлажнителем
 
 unsigned long lastSendTime = 0;
 unsigned long sendInterval = 2000;  // 2 секунды
@@ -36,17 +37,22 @@ void setup() {
   pinMode(lightPin, OUTPUT);
   pinMode(acPin, OUTPUT);
   pinMode(heaterPin, OUTPUT);
+  pinMode(humidifierPin, OUTPUT);
 
   // Изначально выключаем все устройства
-  digitalWrite(lightPin, HIGH);    // Выключено на LOW, включено на HIGH
-  digitalWrite(acPin, HIGH);       // Выключено на LOW, включено на HIGH
-  digitalWrite(heaterPin, HIGH);   // Выключено на LOW, включено на HIGH
+  digitalWrite(lightPin, HIGH);        // Свет выключен (HIGH для выключения)
+  digitalWrite(acPin, HIGH);           // Кондиционер выключен (HIGH для выключения)
+  digitalWrite(heaterPin, HIGH);       // Обогреватель выключен (HIGH для выключения)
+  digitalWrite(humidifierPin, HIGH);   // Увлажнитель выключен (HIGH для выключения)
 }
 
 void loop() {
   unsigned long currentMillis = millis();
   if (currentMillis - lastSendTime >= sendInterval) {
     lastSendTime = currentMillis;
+
+    // Получаем состояние устройств с сервера
+    getDevicesState();
 
     // Читаем данные с датчика DHT
     float temperature = dht.readTemperature();
@@ -57,11 +63,8 @@ void loop() {
       return;
     }
 
-    // Отправляем данные о температуре и влажности на сервер serverUrl
+    // Отправляем данные о температуре и влажности на сервер
     sendDataToServer(temperature, humidity);
-
-    // Получаем состояние устройств с сервера devicesUrl
-    getDevicesState();
   }
 }
 
@@ -69,19 +72,24 @@ void sendDataToServer(float temperature, float humidity) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     WiFiClient client;
+    String serverUrl = "http://192.168.0.11:5000/home_environment";  // URL сервера Flask для отправки данных
     http.begin(client, serverUrl);
     http.addHeader("Content-Type", "application/json");
 
-    String postData = "{\"temperature\":" + String(temperature) + ",\"humidity\":" + String(humidity) + "}";
-    int httpResponseCode = http.POST(postData);
+    // Формируем JSON данные для отправки
+    StaticJsonDocument<200> doc;
+    doc["temperature"] = temperature;
+    doc["humidity"] = humidity;
+
+    String jsonStr;
+    serializeJson(doc, jsonStr);
+
+    int httpResponseCode = http.POST(jsonStr);
 
     if (httpResponseCode > 0) {
       String response = http.getString();
       Serial.println(httpResponseCode);
       Serial.println(response);
-
-      // Обработка ответа от сервера для данных о температуре и влажности
-      // В данном примере эту часть можно оставить пустой, так как обработка не требуется
     } else {
       Serial.print("Error on sending POST: ");
       Serial.println(httpResponseCode);
@@ -96,7 +104,7 @@ void getDevicesState() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     WiFiClient client;
-    http.begin(client, devicesUrl);
+    http.begin(client, devicesUrl);  // Используем правильную сигнатуру begin
 
     int httpResponseCode = http.GET();
 
@@ -119,22 +127,26 @@ void getDevicesState() {
 
 void handleDeviceStateResponse(String response) {
   // Обрабатываем ответ от сервера Flask для данных о состоянии устройств
-  // Проверяем состояние устройств по русским названиям
-  if (response.indexOf("\"Свет\":true") > 0) {
-    digitalWrite(lightPin, LOW);   // Включено на LOW
-  } else {
-    digitalWrite(lightPin, HIGH);  // Выключено на HIGH
-  }
+  DynamicJsonDocument doc(1024);
+  deserializeJson(doc, response);
 
-  if (response.indexOf("\"Кондиционер\":true") > 0) {
-    digitalWrite(acPin, LOW);      // Включено на LOW
-  } else {
-    digitalWrite(acPin, HIGH);     // Выключено на HIGH
-  }
+  // Пример обработки состояний устройств
+  bool lightState = doc["Свет"];
+  bool acState = doc["Кондиционер"];
+  bool heaterState = doc["Обогреватель"];
+  bool humidifierState = doc["Увлажнитель"];
 
-  if (response.indexOf("\"Обогреватель\":true") > 0) {
-    digitalWrite(heaterPin, LOW);  // Включено на LOW
-  } else {
-    digitalWrite(heaterPin, HIGH); // Выключено на HIGH
-  }
+  digitalWrite(lightPin, lightState ? LOW : HIGH);          // Свет
+  digitalWrite(acPin, acState ? LOW : HIGH);                // Кондиционер
+  digitalWrite(heaterPin, heaterState ? LOW : HIGH);        // Обогреватель
+  digitalWrite(humidifierPin, humidifierState ? LOW : HIGH);// Увлажнитель
+
+  Serial.print("Light state: ");
+  Serial.println(lightState);
+  Serial.print("AC state: ");
+  Serial.println(acState);
+  Serial.print("Heater state: ");
+  Serial.println(heaterState);
+  Serial.print("Humidifier state: ");
+  Serial.println(humidifierState);
 }
