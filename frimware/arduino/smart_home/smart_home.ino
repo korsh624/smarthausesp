@@ -16,7 +16,9 @@ DHT dht(DHTPIN, DHTTYPE);
 const int lightPin = 12;
 const int acPin = 13;
 const int heaterPin = 14;
-const int humidifierPin = 2;  // Пин для управления увлажнителем
+const int humidifierPin = 2;   // Пин для управления увлажнителем
+const int device1Pin = 0;      // Пин для устройства device_1
+const int device2Pin = 4;      // Пин для устройства device_2
 
 unsigned long lastSendTime = 0;
 unsigned long sendInterval = 2000;  // 2 секунды
@@ -38,12 +40,16 @@ void setup() {
   pinMode(acPin, OUTPUT);
   pinMode(heaterPin, OUTPUT);
   pinMode(humidifierPin, OUTPUT);
+  pinMode(device1Pin, OUTPUT);
+  pinMode(device2Pin, OUTPUT);
 
   // Изначально выключаем все устройства
-  digitalWrite(lightPin, HIGH);        // Свет выключен (HIGH для выключения)
-  digitalWrite(acPin, HIGH);           // Кондиционер выключен (HIGH для выключения)
-  digitalWrite(heaterPin, HIGH);       // Обогреватель выключен (HIGH для выключения)
-  digitalWrite(humidifierPin, HIGH);   // Увлажнитель выключен (HIGH для выключения)
+  digitalWrite(lightPin, HIGH);         // Свет выключен (HIGH для выключения)
+  digitalWrite(acPin, HIGH);            // Кондиционер выключен (HIGH для выключения)
+  digitalWrite(heaterPin, HIGH);        // Обогреватель выключен (HIGH для выключения)
+  digitalWrite(humidifierPin, HIGH);    // Увлажнитель выключен (HIGH для выключения)
+  digitalWrite(device1Pin, HIGH);       // Device_1 выключен (HIGH для выключения)
+  digitalWrite(device2Pin, HIGH);       // Device_2 выключен (HIGH для выключения)
 }
 
 void loop() {
@@ -135,11 +141,15 @@ void handleDeviceStateResponse(String response) {
   bool acState = doc["Кондиционер"];
   bool heaterState = doc["Обогреватель"];
   bool humidifierState = doc["Увлажнитель"];
+  bool device1State = doc["device_1"];
+  bool device2State = doc["device_2"];
 
   digitalWrite(lightPin, lightState ? LOW : HIGH);          // Свет
   digitalWrite(acPin, acState ? LOW : HIGH);                // Кондиционер
   digitalWrite(heaterPin, heaterState ? LOW : HIGH);        // Обогреватель
   digitalWrite(humidifierPin, humidifierState ? LOW : HIGH);// Увлажнитель
+  digitalWrite(device1Pin, device1State ? LOW : HIGH);      // Device_1
+  digitalWrite(device2Pin, device2State ? LOW : HIGH);      // Device_2
 
   Serial.print("Light state: ");
   Serial.println(lightState);
@@ -149,4 +159,8 @@ void handleDeviceStateResponse(String response) {
   Serial.println(heaterState);
   Serial.print("Humidifier state: ");
   Serial.println(humidifierState);
+  Serial.print("Device_1 state: ");
+  Serial.println(device1State);
+  Serial.print("Device_2 state: ");
+  Serial.println(device2State);
 }

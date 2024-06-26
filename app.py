@@ -11,12 +11,9 @@ class SmartHomeBot:
             "Свет": False,
             "Кондиционер": False,
             "Обогреватель": False,
-            "Телевизор": False,
-            "Духовка": False,
-            "Холодильник": False,
-            "Микроволновка": False,
-            "Стиральная машина": False,
-            "Увлажнитель": False
+            "Увлажнитель": False,
+            "device_1": False,
+            "device_2": False
         }
         self.temperature = None
         self.humidity = None
@@ -25,6 +22,7 @@ class SmartHomeBot:
     def toggle_device(self, device):
         if device in self.devices:
             self.devices[device] = not self.devices[device]
+            self.send_command_to_device(device, self.devices[device])
             return self.devices[device]
         return None
 
@@ -59,6 +57,7 @@ class SmartHomeBot:
         for device in self.devices:
             if device.lower() in command:
                 self.devices[device] = True
+                self.send_command_to_device(device, True)
                 return f"{device} включен."
         return "Устройство не найдено."
 
@@ -66,44 +65,71 @@ class SmartHomeBot:
         for device in self.devices:
             if device.lower() in command:
                 self.devices[device] = False
+                self.send_command_to_device(device, False)
                 return f"{device} выключен."
         return "Устройство не найдено."
 
     def schedule_turn_off(self, command):
-        match = re.search(r'выключи через (\d+)\s*час(?:а|ов|ами)?\s*(\d+)?\s*минут(?:ы|у|а|ой|ут)?\s*(\d+)?\с*секунд(?:ы|у|а|ой|ут)?', command)
+        match = re.search(r'выключи (.*?) через (\d+)\s*(час(?:а|ов)?|минут(?:у|ы)?|секунд(?:у|ы)?)', command)
         if match:
-            hours = int(match.group(1)) if match.group(1) else 0
-            minutes = int(match.group(2)) if match.group(2) else 0
-            seconds = int(match.group(3)) if match.group(3) else 0
-            total_seconds = hours * 3600 + minutes * 60 + seconds
-            Timer(total_seconds, self._turn_off_all_devices).start()
-            return f"Выключу устройства через {hours} часов, {minutes} минут, {seconds} секунд."
+            device = match.group(1).strip()
+            amount = int(match.group(2))
+            unit = match.group(3)
+
+            if unit.startswith("час"):
+                total_seconds = amount * 3600
+            elif unit.startswith("минут"):
+                total_seconds = amount * 60
+            else:
+                total_seconds = amount
+
+            Timer(total_seconds, self._turn_off_device, [device]).start()
+            return f"Выключу {device} через {amount} {unit}."
         return "Неверный формат команды."
 
     def schedule_turn_on(self, command):
-        match = re.search(r'включи через (\д+)\с*час(?:а|ов|ами)?\с*(\д+)?\с*минут(?:ы|у|а|ой|ут)?\с*(\д+)?\с*секунд(?:ы|у|а|ой|ут)?', command)
+        match = re.search(r'включи (.*?) через (\d+)\s*(час(?:а|ов)?|минут(?:у|ы)?|секунд(?:у|ы)?)', command)
         if match:
-            hours = int(match.group(1)) if match.group(1) else 0
-            minutes = int(match.group(2)) if match.group(2) else 0
-            seconds = int(match.group(3)) if match.group(3) else 0
-            total_seconds = hours * 3600 + minutes * 60 + seconds
-            Timer(total_seconds, self._turn_on_all_devices).start()
-            return f"Включу устройства через {hours} часов, {minutes} минут, {seconds} секунд."
+            device = match.group(1).strip()
+            amount = int(match.group(2))
+            unit = match.group(3)
+
+            if unit.startswith("час"):
+                total_seconds = amount * 3600
+            elif unit.startswith("минут"):
+                total_seconds = amount * 60
+            else:
+                total_seconds = amount
+
+            Timer(total_seconds, self._turn_on_device, [device]).start()
+            return f"Включу {device} через {amount} {unit}."
         return "Неверный формат команды."
 
+    def _turn_off_device(self, device):
+        if device in self.devices:
+            self.devices[device] = False
+            self.send_command_to_device(device, False)
+
+    def _turn_on_device(self, device):
+        if device in self.devices:
+            self.devices[device] = True
+            self.send_command_to_device(device, True)
+
     def set_heater_temperature(self, command):
-        match = re.search(r'подогрей до (\д+) градус(?:а|ов|ами)?', command)
+        match = re.search(r'подогрей до (\d+) градус(?:а|ов)?', command)
         if match:
             temperature = int(match.group(1))
             self.devices["Обогреватель"] = True
+            self.send_command_to_device("Обогреватель", True)
             return f"Подогреваю до {temperature} градусов."
         return "Неверный формат команды."
 
     def set_ac_temperature(self, command):
-        match = re.search(r'охлади до (\д+) градус(?:а|ов|ами)?', command)
+        match = re.search(r'охлади до (\d+) градус(?:а|ов)?', command)
         if match:
             temperature = int(match.group(1))
             self.devices["Кондиционер"] = True
+            self.send_command_to_device("Кондиционер", True)
             return f"Охлаждаю до {temperature} градусов."
         return "Неверный формат команды."
 
@@ -112,8 +138,8 @@ class SmartHomeBot:
         Доступные команды:
         1. Включи [устройство]
         2. Выключи [устройство]
-        3. Включи через [часы] часов [минуты] минут [секунды] секунд
-        4. Выключи через [часы] часов [минуты] минут [секунды] секунд
+        3. Включи [устройство] через [число] [часов/минут/секунд]
+        4. Выключи [устройство] через [число] [часов/минут/секунд]
         5. Подогрей до [температура] градусов
         6. Охлади до [температура] градусов
         7. Авто
@@ -124,12 +150,11 @@ class SmartHomeBot:
         return commands.strip()
 
     def configure_auto_mode(self, command):
-        match = re.search(r'настрой авто (\д+) (\д+) (\д+)', command)
+        match = re.search(r'настрой авто (\d+) (\d+) (\d+)', command)
         if match:
             ac_temp = int(match.group(1))
             heater_temp = int(match.group(2))
             humidifier_humidity = int(match.group(3))
-
             return f"Авто настройки: Кондиционер {ac_temp}°C, Обогреватель {heater_temp}°C, Увлажнитель {humidifier_humidity}%."
         return "Неверный формат команды."
 
@@ -163,17 +188,13 @@ class SmartHomeBot:
             else:
                 self.devices["Увлажнитель"] = False
 
-    def schedule_action(self, delay_seconds, action):
-        timer = Timer(delay_seconds, action)
-        timer.start()
-
-    def _turn_off_all_devices(self):
-        for device in self.devices:
-            self.devices[device] = False
-
-    def _turn_on_all_devices(self):
-        for device in self.devices:
-            self.devices[device] = True
+    def send_command_to_device(self, device, state):
+        command = f"{device}:{'ON' if state else 'OFF'}"
+        url = f"http://localhost:5000/toggle/{device.lower()}"
+        try:
+            requests.get(url)
+        except requests.exceptions.RequestException as e:
+            print(f"Error sending command to device: {e}")
 
 def get_weather_yandex():
     api_key = "demo_yandex_weather_api_key_ca6d09349ba0"
@@ -293,4 +314,3 @@ def home_environment():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
-
