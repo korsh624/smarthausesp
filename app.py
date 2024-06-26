@@ -12,9 +12,7 @@ class SmartHomeBot:
             "Кондиционер": False,
             "Обогреватель": False,
             "Увлажнитель": False,
-            "device_1": False,
-            "device_2": False
-        }
+             }
         self.temperature = None
         self.humidity = None
         self.auto_mode = False
