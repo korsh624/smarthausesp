@@ -141,21 +141,86 @@ p {
 
 /* Стили для chat.html */
 .chat-container {
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.chat-container form {
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-start;
+    height: 100vh; /* Занимаем всю высоту экрана */
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.chat-container input[type="text"] {
+.weather-info {
+    width: 30%;
+    text-align: left;
+    height: 100%;
+    overflow-y: auto; /* Добавляем прокрутку, если контент слишком длинный */
+}
+
+.weather-info h2 {
+    margin-top: 0;
+}
+
+.chat-box {
+    width: 65%;
+    text-align: left;
+    height: 100%;
+    overflow-y: auto; /* Добавляем прокрутку, если контент слишком длинный */
+}
+
+.chat-messages {
+    max-height: calc(100% - 70px); /* Высота чата минус высота формы ввода */
+    overflow-y: auto; /* Добавляем прокрутку, если контент слишком длинный */
+}
+
+.chat-form {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.chat-form input[type="text"] {
     flex: 1;
     margin-right: 10px;
+    padding: 10px;
+    font-size: 16px;
 }
 
-.chat-container button[type="submit"] {
-    flex-basis: 100px;
+.chat-form button[type="submit"] {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.message {
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.user-message {
+    background-color: #007bff;
+    color: white;
+    align-self: flex-end;
+}
+
+.bot-message {
+    background-color: #f0f0f0;
+    color: #333;
+    align-self: flex-start;
+}
+
+.back-button {
+    margin-top: 20px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+    background-color: #0056b3;
 }

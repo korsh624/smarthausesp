@@ -12,10 +12,20 @@ class SmartHomeBot:
             "Кондиционер": False,
             "Обогреватель": False,
             "Увлажнитель": False,
-             }
+        }
         self.temperature = None
         self.humidity = None
         self.auto_mode = False
+        self.auto_settings = {
+            "ac_on_temp": None,
+            "heater_on_temp": None,
+            "humidifier_on_humidity": None,
+            "ac_off_temp": None,
+            "heater_off_temp": None,
+            "humidifier_off_humidity": None
+        }
+        self.pending_auto_settings = []
+        self.current_auto_setting_step = 0
 
     def toggle_device(self, device):
         if device in self.devices:
@@ -28,7 +38,9 @@ class SmartHomeBot:
         command = command.lower().strip()
         response = "Неизвестная команда."
 
-        if command.startswith("включи"):
+        if self.pending_auto_settings:
+            response = self.process_auto_mode_configuration(command)
+        elif command.startswith("включи"):
             response = self.turn_on_device(command)
         elif command.startswith("выключи"):
             response = self.turn_off_device(command)
@@ -44,10 +56,12 @@ class SmartHomeBot:
             response = self.enable_auto_mode()
         elif command == "авто выключить":
             response = self.disable_auto_mode()
+        elif command == "авто сброс":
+            response = self.reset_auto_mode()
         elif command == "список команд":
             response = self.list_commands()
         elif command.startswith("настрой авто"):
-            response = self.configure_auto_mode(command)
+            response = self.initiate_auto_mode_configuration()
 
         return response
 
@@ -82,11 +96,11 @@ class SmartHomeBot:
                 total_seconds = amount
 
             Timer(total_seconds, self._turn_off_device, [device]).start()
-            return f"Выключу {device} через {amount} {unit}."
+            return f"{device} будет выключен через {amount} {unit}."
         return "Неверный формат команды."
 
     def schedule_turn_on(self, command):
-        match = re.search(r'включи (.*?) через (\d+)\s*(час(?:а|ов)?|минут(?:у|ы)?|секунд(?:у|ы)?)', command)
+        match = re.search(r'включи (.*?) через (\д+)\s*(час(?:а|ов)?|минут(?:у|ы)?|секунд(?:у|ы)?)', command)
         if match:
             device = match.group(1).strip()
             amount = int(match.group(2))
@@ -100,7 +114,7 @@ class SmartHomeBot:
                 total_seconds = amount
 
             Timer(total_seconds, self._turn_on_device, [device]).start()
-            return f"Включу {device} через {amount} {unit}."
+            return f"{device} будет включен через {amount} {unit}."
         return "Неверный формат команды."
 
     def _turn_off_device(self, device):
@@ -123,7 +137,7 @@ class SmartHomeBot:
         return "Неверный формат команды."
 
     def set_ac_temperature(self, command):
-        match = re.search(r'охлади до (\d+) градус(?:а|ов)?', command)
+        match = re.search(r'охлади до (\д+) градус(?:а|ов)?', command)
         if match:
             temperature = int(match.group(1))
             self.devices["Кондиционер"] = True
@@ -141,20 +155,55 @@ class SmartHomeBot:
         5. Подогрей до [температура] градусов
         6. Охлади до [температура] градусов
         7. Авто
-        8. Выключить авто
-        9. Список команд
-        10. Настрой авто [температура кондиционера] [температура обогревателя] [влажность увлажнителя]
+        8. Авто выключить
+        9. Авто сброс
+        10. Список команд
+        11. Настрой авто
         """
         return commands.strip()
 
-    def configure_auto_mode(self, command):
-        match = re.search(r'настрой авто (\d+) (\d+) (\d+)', command)
-        if match:
-            ac_temp = int(match.group(1))
-            heater_temp = int(match.group(2))
-            humidifier_humidity = int(match.group(3))
-            return f"Авто настройки: Кондиционер {ac_temp}°C, Обогреватель {heater_temp}°C, Увлажнитель {humidifier_humidity}%."
-        return "Неверный формат команды."
+    def initiate_auto_mode_configuration(self):
+        self.pending_auto_settings = [
+            "Введите температуру включения кондиционера:",
+            "Введите температуру включения обогревателя:",
+            "Введите влажность включения увлажнителя:",
+            "Введите температуру выключения кондиционера:",
+            "Введите температуру выключения обогревателя:",
+            "Введите влажность выключения увлажнителя:"
+        ]
+        self.current_auto_setting_step = 0
+        return self.pending_auto_settings[self.current_auto_setting_step]
+
+    def process_auto_mode_configuration(self, input_value):
+        try:
+            value = int(input_value)
+        except ValueError:
+            return "Пожалуйста, введите число."
+
+        if self.current_auto_setting_step == 0:
+            self.auto_settings["ac_on_temp"] = value
+        elif self.current_auto_setting_step == 1:
+            self.auto_settings["heater_on_temp"] = value
+        elif self.current_auto_setting_step == 2:
+            self.auto_settings["humidifier_on_humidity"] = value
+        elif self.current_auto_setting_step == 3:
+            self.auto_settings["ac_off_temp"] = value
+        elif self.current_auto_setting_step == 4:
+            self.auto_settings["heater_off_temp"] = value
+        elif self.current_auto_setting_step == 5:
+            self.auto_settings["humidifier_off_humidity"] = value
+
+        self.current_auto_setting_step += 1
+
+        if self.current_auto_setting_step < len(self.pending_auto_settings):
+            return self.pending_auto_settings[self.current_auto_setting_step]
+        else:
+            self.pending_auto_settings = []
+            return (f"Автоматический режим настроен: Кондиционер включается при {self.auto_settings['ac_on_temp']}°C и "
+                    f"выключается при {self.auto_settings['ac_off_temp']}°C, Обогреватель включается при "
+                    f"{self.auto_settings['heater_on_temp']}°C и выключается при {self.auto_settings['heater_off_temp']}°C, "
+                    f"Увлажнитель включается при {self.auto_settings['humidifier_on_humidity']}% и выключается при "
+                    f"{self.auto_settings['humidifier_off_humidity']}%.")
 
     def update_sensor_data(self, temperature, humidity):
         self.temperature = temperature
@@ -170,21 +219,46 @@ class SmartHomeBot:
         self.auto_mode = False
         return "Автоматический режим выключен."
 
+    def reset_auto_mode(self):
+        self.auto_settings = {
+            "ac_on_temp": 0,
+            "heater_on_temp": 0,
+            "humidifier_on_humidity": 0,
+            "ac_off_temp": 0,
+            "heater_off_temp": 0,
+            "humidifier_off_humidity": 0
+        }
+        self.auto_mode = False
+        self.devices["Кондиционер"] = False
+        self.devices["Обогреватель"] = False
+        self.devices["Увлажнитель"] = False
+        self.send_command_to_device("Кондиционер", False)
+        self.send_command_to_device("Обогреватель", False)
+        self.send_command_to_device("Увлажнитель", False)
+        return "Автоматический режим сброшен и все устройства выключены."
+
     def check_auto_mode_conditions(self):
         if self.temperature is not None and self.humidity is not None:
-            if self.temperature > 25:
+            if self.temperature > self.auto_settings["ac_on_temp"]:
                 self.devices["Кондиционер"] = True
-                self.devices["Обогреватель"] = False
-            elif self.temperature < 20:
+                self.send_command_to_device("Кондиционер", True)
+            elif self.temperature <= self.auto_settings["ac_off_temp"]:
                 self.devices["Кондиционер"] = False
-            if self.temperature < 15:
+                self.send_command_to_device("Кондиционер", False)
+
+            if self.temperature < self.auto_settings["heater_on_temp"]:
                 self.devices["Обогреватель"] = True
-            elif self.temperature >= 20:
+                self.send_command_to_device("Обогреватель", True)
+            elif self.temperature >= self.auto_settings["heater_off_temp"]:
                 self.devices["Обогреватель"] = False
-            if self.humidity < 50:
+                self.send_command_to_device("Обогреватель", False)
+
+            if self.humidity < self.auto_settings["humidifier_on_humidity"]:
                 self.devices["Увлажнитель"] = True
-            else:
+                self.send_command_to_device("Увлажнитель", True)
+            elif self.humidity >= self.auto_settings["humidifier_off_humidity"]:
                 self.devices["Увлажнитель"] = False
+                self.send_command_to_device("Увлажнитель", False)
 
     def send_command_to_device(self, device, state):
         command = f"{device}:{'ON' if state else 'OFF'}"
@@ -255,7 +329,8 @@ def index():
 @app.route('/devices')
 def devices():
     weather = get_weather_yandex()
-    return render_template('devices.html', devices=bot.devices, temperature=bot.temperature, humidity=bot.humidity, weather=weather)
+    return render_template('devices.html', devices=bot.devices, temperature=bot.temperature, humidity=bot.humidity,
+                           weather=weather)
 
 @app.route('/toggle/<device>')
 def toggle(device):
