@@ -4,6 +4,90 @@
     <meta charset="UTF-8">
     <title>Управление устройствами</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #ece9e6, #ffffff);
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+        .header {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+        .sensor-data, .weather {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 80%;
+            max-width: 400px; /* Максимальная ширина */
+        }
+        .sensor-data p, .weather p {
+            margin: 5px 0;
+            font-size: 1.2em;
+        }
+        .devices {
+            margin-top: 40px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .devices button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .devices button.on {
+            background-color: #4CAF50;
+        }
+        .devices button.off {
+            background-color: #f44336;
+        }
+        .devices button:hover {
+            transform: scale(1.05);
+        }
+        .devices button:active {
+            transform: scale(1);
+        }
+        .back-button {
+            margin-top: 20px;
+            background-color: #333;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .back-button:hover {
+            background-color: #555;
+            transform: scale(1.05);
+        }
+    </style>
     <script>
         function fetchDeviceStates() {
             fetch('/device_states')
@@ -29,12 +113,14 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             fetchDeviceStates();
-            setInterval(fetchDeviceStates, 1); // Обновление данных каждые 5 секунд
+            setInterval(fetchDeviceStates, 5); // Обновление данных каждые 5 секунд
         });
     </script>
 </head>
 <body>
-    <h1>Управление устройствами</h1>
+    <div class="header">
+        <h1>Управление устройствами</h1>
+    </div>
     <div class="sensor-data">
         <p>Температура: <span id="temperature">{{ temperature if temperature is not none else "N/A" }} °C</span></p>
         <p>Влажность: <span id="humidity">{{ humidity if humidity is not none else "N/A" }} %</span></p>
@@ -46,7 +132,7 @@
             </button>
         {% endfor %}
     </div>
-    <button onclick="location.href='{{ url_for('index') }}'">Вернуться на главную</button>
+    <button class="back-button" onclick="location.href='{{ url_for('index') }}'">Вернуться на главную</button>
     <div class="weather">
         {% if weather %}
             <p>Погода: {{ weather.description }}</p>

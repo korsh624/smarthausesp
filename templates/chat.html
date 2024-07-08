@@ -4,25 +4,151 @@
     <meta charset="UTF-8">
     <title>Чат-бот</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #ece9e6, #ffffff);
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+        .chat-container {
+            display: flex;
+            flex-direction: row;
+            width: 80%;
+            max-width: 1200px;
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .weather-info {
+            padding: 20px;
+            background: #f7f7f7;
+            flex: 1;
+            border-right: 1px solid #ddd;
+            text-align: center;
+        }
+        .weather-info h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+        .weather-info p {
+            margin: 5px 0;
+            font-size: 1.2em;
+        }
+        .chat-box {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        .chat-box h1 {
+            font-size: 2.5em;
+            color: #4CAF50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 60%;
+        }
+        .user-message {
+            background: #e1f5fe;
+            align-self: flex-end;
+        }
+        .bot-message {
+            background: #f1f8e9;
+            align-self: flex-start;
+        }
+        .chat-form {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .chat-form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px 0 0 8px;
+            font-size: 1em;
+        }
+        .chat-form button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .chat-form button:hover {
+            background-color: #45a049;
+        }
+        .back-button {
+            margin-top: 20px;
+            background-color: #333;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .back-button:hover {
+            background-color: #555;
+            transform: scale(1.05);
+        }
+    </style>
 </head>
 <body>
-    <h1>Чат-бот</h1>
-    <form method="POST">
-        <input type="text" name="message" placeholder="Введите сообщение" required>
-        <button type="submit">Отправить</button>
-    </form>
-    {% if response %}
-        <p>Ответ: {{ response }}</p>
-    {% endif %}
-    <button onclick="location.href='{{ url_for('index') }}'">Вернуться на главную</button>
-    <div class="weather">
-        {% if weather %}
-            <p>Погода: {{ weather.description }}</p>
-            <p>Температура: {{ weather.temperature }} °C</p>
-            <p>Влажность: {{ weather.humidity }} %</p>
-        {% else %}
-            <p>Не удалось загрузить данные о погоде</p>
-        {% endif %}
+    <div class="chat-container">
+        <aside class="weather-info">
+            <h2>Погода</h2>
+            {% if weather %}
+                <p>Погода: {{ weather.description }}</p>
+                <p>Температура: {{ weather.temperature }} °C</p>
+                <p>Влажность: {{ weather.humidity }} %</p>
+            {% else %}
+                <p>Не удалось загрузить данные о погоде</p>
+            {% endif %}
+            <button class="back-button" onclick="location.href='{{ url_for('index') }}'">Вернуться на главную</button>
+        </aside>
+        <main class="chat-box">
+            <h1>Чат-бот</h1>
+            <div class="chat-messages">
+                {% for message in messages %}
+                    <div class="message {{ 'user-message' if message.sender == 'user' else 'bot-message' }}">
+                        <p>{{ message.text }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+            <form method="POST" class="chat-form">
+                <input type="text" name="message" placeholder="Введите сообщение" required>
+                <button type="submit">Отправить</button>
+            </form>
+        </main>
     </div>
 </body>
 </html>

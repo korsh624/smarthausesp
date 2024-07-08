@@ -36,32 +36,32 @@ class SmartHomeBot:
 
     def handle_command(self, command):
         command = command.lower().strip()
-        response = "Неизвестная команда."
+        response = ["Неизвестная команда."]
 
         if self.pending_auto_settings:
-            response = self.process_auto_mode_configuration(command)
+            response = [self.process_auto_mode_configuration(command)]
         elif command.startswith("включи"):
-            response = self.turn_on_device(command)
+            response = [self.turn_on_device(command)]
         elif command.startswith("выключи"):
-            response = self.turn_off_device(command)
+            response = [self.turn_off_device(command)]
         elif "выключи через" in command:
-            response = self.schedule_turn_off(command)
+            response = [self.schedule_turn_off(command)]
         elif "включи через" in command:
-            response = self.schedule_turn_on(command)
+            response = [self.schedule_turn_on(command)]
         elif command.startswith("подогрей до"):
-            response = self.set_heater_temperature(command)
+            response = [self.set_heater_temperature(command)]
         elif command.startswith("охлади до"):
-            response = self.set_ac_temperature(command)
+            response = [self.set_ac_temperature(command)]
         elif command == "авто":
-            response = self.enable_auto_mode()
+            response = [self.enable_auto_mode()]
         elif command == "авто выключить":
-            response = self.disable_auto_mode()
+            response = [self.disable_auto_mode()]
         elif command == "авто сброс":
-            response = self.reset_auto_mode()
+            response = [self.reset_auto_mode()]
         elif command == "список команд":
             response = self.list_commands()
         elif command.startswith("настрой авто"):
-            response = self.initiate_auto_mode_configuration()
+            response = [self.initiate_auto_mode_configuration()]
 
         return response
 
@@ -100,7 +100,7 @@ class SmartHomeBot:
         return "Неверный формат команды."
 
     def schedule_turn_on(self, command):
-        match = re.search(r'включи (.*?) через (\д+)\s*(час(?:а|ов)?|минут(?:у|ы)?|секунд(?:у|ы)?)', command)
+        match = re.search(r'включи (.*?) через (\д+)\с*(час(?:а|ов)?|минут(?:у|ы)?|секунд(?:у|ы)?)', command)
         if match:
             device = match.group(1).strip()
             amount = int(match.group(2))
@@ -128,11 +128,12 @@ class SmartHomeBot:
             self.send_command_to_device(device, True)
 
     def set_heater_temperature(self, command):
-        match = re.search(r'подогрей до (\d+) градус(?:а|ов)?', command)
+        match = re.search(r'подогрей до (\д+) градус(?:а|ов)?', command)
         if match:
             temperature = int(match.group(1))
             self.devices["Обогреватель"] = True
             self.send_command_to_device("Обогреватель", True)
+            self.send_temperature_command("heater", temperature)
             return f"Подогреваю до {temperature} градусов."
         return "Неверный формат команды."
 
@@ -142,25 +143,26 @@ class SmartHomeBot:
             temperature = int(match.group(1))
             self.devices["Кондиционер"] = True
             self.send_command_to_device("Кондиционер", True)
+            self.send_temperature_command("ac", temperature)
             return f"Охлаждаю до {temperature} градусов."
         return "Неверный формат команды."
 
     def list_commands(self):
-        commands = """
-        Доступные команды:
-        1. Включи [устройство]
-        2. Выключи [устройство]
-        3. Включи [устройство] через [число] [часов/минут/секунд]
-        4. Выключи [устройство] через [число] [часов/минут/секунд]
-        5. Подогрей до [температура] градусов
-        6. Охлади до [температура] градусов
-        7. Авто
-        8. Авто выключить
-        9. Авто сброс
-        10. Список команд
-        11. Настрой авто
-        """
-        return commands.strip()
+        commands = [
+            "Доступные команды:",
+            "1. Включи [устройство]",
+            "2. Выключи [устройство]",
+            "3. Включи [устройство] через [число] [часов/минут/секунд]",
+            "4. Выключи [устройство] через [число] [часов/минут/секунд]",
+            "5. Подогрей до [температура] градусов",
+            "6. Охлади до [температура] градусов",
+            "7. Авто",
+            "8. Авто выключить",
+            "9. Авто сброс",
+            "10. Список команд",
+            "11. Настрой авто"
+        ]
+        return commands
 
     def initiate_auto_mode_configuration(self):
         self.pending_auto_settings = [
@@ -268,6 +270,17 @@ class SmartHomeBot:
         except requests.exceptions.RequestException as e:
             print(f"Error sending command to device: {e}")
 
+    def send_temperature_command(self, device_type, temperature):
+        url = f"http://localhost:5000/{device_type}/set_temperature"
+        data = {'temperature': temperature}
+        try:
+            requests.post(url, json=data)
+        except requests.exceptions.RequestException as e:
+            print(f"Error sending temperature command to device: {e}")
+
+    def get_device_states(self):
+        return self.devices
+
 def get_weather_yandex():
     api_key = "demo_yandex_weather_api_key_ca6d09349ba0"
     city = "Vladimir"
@@ -350,12 +363,17 @@ def control():
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
     weather = get_weather_yandex()
-    response = None
+    messages = []
     if request.method == 'POST':
         user_input = request.form['message']
         if user_input.strip():
-            response = bot.handle_command(user_input)
-    return render_template('chat.html', response=response, weather=weather)
+            user_message = {"sender": "user", "text": user_input}
+            messages.append(user_message)
+            bot_responses = bot.handle_command(user_input)
+            for bot_response in bot_responses:
+                bot_message = {"sender": "bot", "text": bot_response}
+                messages.append(bot_message)
+    return render_template('chat.html', messages=messages, weather=weather)
 
 @app.route('/update_sensor_data', methods=['POST'])
 def update_sensor_data():
@@ -367,7 +385,7 @@ def update_sensor_data():
 
 @app.route('/device_states', methods=['GET'])
 def device_states():
-    return jsonify(bot.devices)
+    return jsonify(bot.get_device_states())
 
 @app.route('/get_sensor_data', methods=['GET'])
 def get_sensor_data():

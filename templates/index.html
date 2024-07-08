@@ -4,12 +4,92 @@
     <meta charset="UTF-8">
     <title>Главная</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #ece9e6, #ffffff);
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+        .header {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            color: #4CAF50;
+        }
+        .header h2 {
+            font-size: 2em;
+            margin-bottom: 40px;
+            color: #333;
+        }
+        .buttons {
+            margin-top: 100px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+        .weather {
+            margin-top: 40px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .weather p {
+            margin: 5px 0;
+            font-size: 1.2em;
+        }
+        .github-icon {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 2em;
+            color: #333;
+            transition: color 0.3s;
+        }
+        .github-icon:hover {
+            color: #4CAF50;
+        }
+    </style>
 </head>
 <body>
-    <h1>Добро пожаловать!</h1>
-    <button onclick="location.href='{{ url_for('devices') }}'">Показать устройства</button>
-    <button onclick="location.href='{{ url_for('chat') }}'">Чат-бот</button>
-    <button class="button" onclick="location.href='{{ url_for('home_environment') }}'">Температура и влажность дома</button>
+    <div class="header">
+        <h1>Добро пожаловать!</h1>
+        <h2>Умный дом на базе управления ESP8266</h2>
+    </div>
+    <div class="buttons">
+        <button onclick="location.href='{{ url_for('devices') }}'">Показать устройства</button>
+        <button onclick="location.href='{{ url_for('chat') }}'">Чат-бот</button>
+        <button onclick="location.href='{{ url_for('home_environment') }}'">Температура и влажность дома</button>
+    </div>
     <div class="weather">
         {% if weather %}
             <p>Погода: {{ weather.description }}</p>
@@ -19,5 +99,8 @@
             <p>Не удалось загрузить данные о погоде</p>
         {% endif %}
     </div>
+    <a href="https://github.com/serega20112" class="github-icon" target="_blank">
+        <i class="fab fa-github"></i>
+    </a>
 </body>
 </html>
