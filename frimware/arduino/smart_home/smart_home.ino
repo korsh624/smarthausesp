@@ -1,7 +1,9 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
-#include <ArduinoJson.h>  // Для работы с JSON
+#include <ArduinoJson.h>
 #include <DHT.h>
+#include <UniversalTelegramBot.h>
+#include <WiFiClientSecure.h>
 
 const char* ssid = "sweet_home";
 const char* password = "gelenvagen94";
@@ -18,10 +20,19 @@ const int acPin = 13;
 const int heaterPin = 14;
 const int humidifierPin = 2;   // Пин для управления увлажнителем
 const int device1Pin = 0;      // Пин для устройства device_1
-const int device2Pin = 4;      // Пин для устройства device_2
+const int device2Pin = 15;     // Пин для устройства device_2
 
 unsigned long lastSendTime = 0;
-unsigned long sendInterval = 2000;  // 2 секунды
+unsigned long sendInterval = 500;  // маленький интервал чтобы устройства включались мгновенно
+
+// Телеграм бот токен
+#define BOT_TOKEN "7345075005:AAHy76MKiXKTU3nXfGmE8NR2n4uOnd1WtpY"
+
+WiFiClientSecure client;
+UniversalTelegramBot bot(BOT_TOKEN, client);
+
+void handleNewMessages(int numNewMessages);
+void handleDeviceStateResponse(String response);
 
 void setup() {
   Serial.begin(115200);
@@ -72,6 +83,12 @@ void loop() {
     // Отправляем данные о температуре и влажности на сервер
     sendDataToServer(temperature, humidity);
   }
+
+  int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+  while (numNewMessages) {
+    handleNewMessages(numNewMessages);
+    numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+  }
 }
 
 void sendDataToServer(float temperature, float humidity) {
@@ -81,6 +98,10 @@ void sendDataToServer(float temperature, float humidity) {
     String serverUrl = "http://192.168.0.11:5000/home_environment";  // URL сервера Flask для отправки данных
     http.begin(client, serverUrl);
     http.addHeader("Content-Type", "application/json");
+
+    // Округляем температуру и влажность до десятых
+    temperature = round(temperature * 10.0) / 10.0;
+    humidity = round(humidity * 10.0) / 10.0;
 
     // Формируем JSON данные для отправки
     StaticJsonDocument<200> doc;
@@ -159,8 +180,56 @@ void handleDeviceStateResponse(String response) {
   Serial.println(heaterState);
   Serial.print("Humidifier state: ");
   Serial.println(humidifierState);
-  Serial.print("Device_1 state: ");
+  Serial.print("Device 1 state: ");
   Serial.println(device1State);
-  Serial.print("Device_2 state: ");
+  Serial.print("Device 2 state: ");
   Serial.println(device2State);
+}
+
+void handleNewMessages(int numNewMessages) {
+  for (int i = 0; i < numNewMessages; i++) {
+    String chat_id = String(bot.messages[i].chat_id);
+    String text = bot.messages[i].text;
+
+    // Проверка и выполнение команд
+    if (text == "/light_on") {
+      digitalWrite(lightPin, LOW);
+      bot.sendMessage(chat_id, "Light is ON", "");
+    } else if (text == "/light_off") {
+      digitalWrite(lightPin, HIGH);
+      bot.sendMessage(chat_id, "Light is OFF", "");
+    } else if (text == "/ac_on") {
+      digitalWrite(acPin, LOW);
+      bot.sendMessage(chat_id, "AC is ON", "");
+    } else if (text == "/ac_off") {
+      digitalWrite(acPin, HIGH);
+      bot.sendMessage(chat_id, "AC is OFF", "");
+    } else if (text == "/heater_on") {
+      digitalWrite(heaterPin, LOW);
+      bot.sendMessage(chat_id, "Heater is ON", "");
+    } else if (text == "/heater_off") {
+      digitalWrite(heaterPin, HIGH);
+      bot.sendMessage(chat_id, "Heater is OFF", "");
+    } else if (text == "/humidifier_on") {
+      digitalWrite(humidifierPin, LOW);
+      bot.sendMessage(chat_id, "Humidifier is ON", "");
+    } else if (text == "/humidifier_off") {
+      digitalWrite(humidifierPin, HIGH);
+      bot.sendMessage(chat_id, "Humidifier is OFF", "");
+    } else if (text == "/device1_on") {
+      digitalWrite(device1Pin, LOW);
+      bot.sendMessage(chat_id, "Device 1 is ON", "");
+    } else if (text == "/device1_off") {
+      digitalWrite(device1Pin, HIGH);
+      bot.sendMessage(chat_id, "Device 1 is OFF", "");
+    } else if (text == "/device2_on") {
+      digitalWrite(device2Pin, LOW);
+      bot.sendMessage(chat_id, "Device 2 is ON", "");
+    } else if (text == "/device2_off") {
+      digitalWrite(device2Pin, HIGH);
+      bot.sendMessage(chat_id, "Device 2 is OFF", "");
+    } else {
+      bot.sendMessage(chat_id, "Unknown command", "");
+    }
+  }
 }

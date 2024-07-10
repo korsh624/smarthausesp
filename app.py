@@ -1,7 +1,10 @@
 from flask import Flask, render_template, request, jsonify
 import requests
 import re
-from threading import Timer
+from threading import Timer, Thread
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+
 
 app = Flask(__name__)
 
@@ -333,7 +336,29 @@ def translate_condition(condition):
     return condition_translation.get(condition, condition)
 
 bot = SmartHomeBot()
+TELEGRAM_API_TOKEN = "7345075005:AAHy76MKiXKTU3nXfGmE8NR2n4uOnd1WtpY"
+def start(update: Update, context: CallbackContext):
+    update.message.reply_text("Привет! Я могу помочь управлять умным домом. Отправь мне команду.")
 
+def handle_message(update: Update, context: CallbackContext):
+    user_input = update.message.text
+    response = bot.handle_command(user_input)
+    for res in response:
+        update.message.reply_text(res)
+
+def run_telegram_bot():
+    updater = Updater(TELEGRAM_API_TOKEN, use_context=True)
+    dispatcher = updater.dispatcher
+
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+
+    updater.start_polling()
+    updater.idle()
+
+# Запуск Telegram бота в отдельном потоке
+telegram_thread = Thread(target=run_telegram_bot)
+telegram_thread.start()
 @app.route('/')
 def index():
     weather = get_weather_yandex()
