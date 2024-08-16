@@ -17,6 +17,11 @@
             align-items: center;
             height: 100vh;
             position: relative;
+            transition: background 0.3s, color 0.3s;
+        }
+        .dark-theme {
+            background: linear-gradient(to right, #1f1f1f, #2e2e2e);
+            color: #f1f1f1;
         }
         .header {
             text-align: center;
@@ -30,7 +35,7 @@
         .header h2 {
             font-size: 2em;
             margin-bottom: 40px;
-            color: #333;
+            color: inherit;
         }
         .buttons {
             margin-top: 100px;
@@ -78,7 +83,30 @@
         .github-icon:hover {
             color: #4CAF50;
         }
+        .theme-toggle {
+            position: absolute;
+            bottom: 60px;
+            left: 20px;
+            font-size: 2em;
+            color: #333;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .theme-toggle:hover {
+            color: #4CAF50;
+        }
     </style>
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        }
+        window.addEventListener('load', function() {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="header">
@@ -99,6 +127,7 @@
             <p>Не удалось загрузить данные о погоде</p>
         {% endif %}
     </div>
+    <i class="fas fa-moon theme-toggle" onclick="toggleTheme()"></i>
     <a href="https://github.com/serega20112" class="github-icon" target="_blank">
         <i class="fab fa-github"></i>
     </a>

@@ -15,6 +15,11 @@
             flex-direction: column;
             align-items: center;
             height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+        .dark-theme {
+            background: linear-gradient(to right, #1f1f1f, #2e2e2e);
+            color: #f1f1f1;
         }
         .chat-container {
             display: flex;
@@ -33,27 +38,46 @@
             flex: 1;
             border-right: 1px solid #ddd;
             text-align: center;
+            transition: background 0.3s;
+            min-width: 250px;
+            color: #fff; /* Изменили цвет текста на белый */
+        }
+        .dark-theme .weather-info {
+            background: #2a2a2a;
+            color: #cfcfcf;
+            border-color: #444;
         }
         .weather-info h2 {
             font-size: 1.5em;
             margin-bottom: 20px;
-            color: #4CAF50;
+            color: #fff; /* Цвет заголовка тоже белый */
+        }
+        .dark-theme .weather-info h2 {
+            color: #90ee90;
         }
         .weather-info p {
             margin: 5px 0;
             font-size: 1.2em;
+            color: #fff; /* Цвет текста погоды белый */
         }
         .chat-box {
             flex: 2;
             display: flex;
             flex-direction: column;
             padding: 20px;
+            transition: background 0.3s;
+        }
+        .dark-theme .chat-box {
+            background: #2e2e2e;
         }
         .chat-box h1 {
             font-size: 2.5em;
             color: #4CAF50;
             margin-bottom: 20px;
             text-align: center;
+        }
+        .dark-theme .chat-box h1 {
+            color: #90ee90;
         }
         .chat-messages {
             flex: 1;
@@ -65,20 +89,42 @@
             margin-bottom: 20px;
             display: flex;
             flex-direction: column;
+            transition: background 0.3s;
+        }
+        .dark-theme .chat-messages {
+            background: #1c1c1c;
+            box-shadow: inset 0 4px 8px rgba(255, 255, 255, 0.1);
         }
         .message {
             margin: 10px 0;
             padding: 10px;
             border-radius: 8px;
             max-width: 60%;
+            position: relative;
         }
         .user-message {
             background: #e1f5fe;
             align-self: flex-end;
         }
+        .dark-theme .user-message {
+            background: #34515e;
+        }
         .bot-message {
             background: #f1f8e9;
             align-self: flex-start;
+        }
+        .dark-theme .bot-message {
+            background: #4b5d4d;
+        }
+        .message-time {
+            font-size: 0.8em;
+            color: #888;
+            position: absolute;
+            bottom: -20px;
+            right: 10px;
+        }
+        .dark-theme .message-time {
+            color: #bbb;
         }
         .chat-form {
             display: flex;
@@ -90,6 +136,11 @@
             border: 1px solid #ddd;
             border-radius: 8px 0 0 8px;
             font-size: 1em;
+        }
+        .dark-theme .chat-form input {
+            background-color: #2a2a2a;
+            color: #f1f1f1;
+            border-color: #444;
         }
         .chat-form button {
             padding: 10px 20px;
@@ -120,7 +171,46 @@
             background-color: #555;
             transform: scale(1.05);
         }
+        .clear-chat-button {
+            padding: 10px 20px;
+            background-color: #ff5252;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-left: 10px;
+        }
+        .clear-chat-button:hover {
+            background-color: #ff1744;
+        }
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5em;
+            color: #333;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .dark-theme .theme-toggle {
+            color: #f1f1f1;
+        }
     </style>
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        }
+        window.addEventListener('load', function() {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+        });
+        function clearChat() {
+            document.querySelector('.chat-messages').innerHTML = '';
+        }
+    </script>
 </head>
 <body>
     <div class="chat-container">
@@ -141,14 +231,17 @@
                 {% for message in messages %}
                     <div class="message {{ 'user-message' if message.sender == 'user' else 'bot-message' }}">
                         <p>{{ message.text }}</p>
+                        <span class="message-time">{{ message.time }}</span>
                     </div>
                 {% endfor %}
             </div>
             <form method="POST" class="chat-form">
                 <input type="text" name="message" placeholder="Введите сообщение" required>
                 <button type="submit">Отправить</button>
+                <button type="button" class="clear-chat-button" onclick="clearChat()">Очистить чат</button>
             </form>
         </main>
     </div>
+    <div class="theme-toggle" onclick="toggleTheme()">&#9790;</div>
 </body>
 </html>

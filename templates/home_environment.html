@@ -15,6 +15,11 @@
             flex-direction: column;
             align-items: center;
             height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+        .dark-theme {
+            background: linear-gradient(to right, #1f1f1f, #2e2e2e);
+            color: #f1f1f1;
         }
         .container {
             display: flex;
@@ -69,25 +74,49 @@
             margin: 5px 0;
             font-size: 1.2em;
         }
+        .theme-toggle {
+            position: absolute;
+            bottom: 60px;
+            left: 20px;
+            font-size: 2em;
+            color: #333;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .theme-toggle:hover {
+            color: #4CAF50;
+        }
     </style>
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        }
+        window.addEventListener('load', function() {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="container">
         <div class="weather">
             {% if weather %}
                 <p>Погода: {{ weather.description }}</p>
-                <p>Температура: {{ weather.temperature }} °C</p>
-                <p>Влажность: {{ weather.humidity }} %</p>
+                <p>Температура: {{ weather.temperature | round(2) }} °C</p>
+                <p>Влажность: {{ weather.humidity | round(2) }} %</p>
             {% else %}
                 <p>Не удалось загрузить данные о погоде</p>
             {% endif %}
         </div>
         <div class="sensor-data">
             <h1>Данные с сенсоров умного дома</h1>
-            <p>Температура в доме: {{ temperature }} °C</p>
-            <p>Влажность в доме: {{ humidity }} %</p>
+            <p>Температура в доме: {{ temperature | round(2) }} °C</p>
+            <p>Влажность в доме: {{ humidity | round(2) }} %</p>
         </div>
         <button onclick="location.href='{{ url_for('index') }}'">Вернуться на главную</button>
     </div>
+    <i class="fas fa-moon theme-toggle" onclick="toggleTheme()"></i>
 </body>
 </html>

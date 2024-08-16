@@ -336,7 +336,7 @@ def translate_condition(condition):
     return condition_translation.get(condition, condition)
 
 bot = SmartHomeBot()
-TELEGRAM_API_TOKEN = "7345075005:AAHy76MKiXKTU3nXfGmE8NR2n4uOnd1WtpY"
+
 def start(update: Update, context: CallbackContext):
     update.message.reply_text("Привет! Я могу помочь управлять умным домом. Отправь мне команду.")
 

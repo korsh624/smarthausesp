@@ -15,6 +15,11 @@
             flex-direction: column;
             align-items: center;
             height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+        .dark-theme {
+            background: linear-gradient(to right, #1f1f1f, #2e2e2e);
+            color: #f1f1f1;
         }
         .header {
             text-align: center;
@@ -33,7 +38,7 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             text-align: center;
             width: 80%;
-            max-width: 400px; /* Максимальная ширина */
+            max-width: 400px;
         }
         .sensor-data p, .weather p {
             margin: 5px 0;
@@ -87,6 +92,18 @@
             background-color: #555;
             transform: scale(1.05);
         }
+        .theme-toggle {
+            position: absolute;
+            bottom: 60px;
+            left: 20px;
+            font-size: 2em;
+            color: #333;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .theme-toggle:hover {
+            color: #4CAF50;
+        }
     </style>
     <script>
         function fetchDeviceStates() {
@@ -113,7 +130,17 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             fetchDeviceStates();
-            setInterval(fetchDeviceStates, 5); // Обновление данных каждые 5 секунд
+            setInterval(fetchDeviceStates, 5000); // Обновление данных каждые 5 секунд
+        });
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        }
+        window.addEventListener('load', function() {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
         });
     </script>
 </head>
@@ -122,8 +149,8 @@
         <h1>Управление устройствами</h1>
     </div>
     <div class="sensor-data">
-        <p>Температура: <span id="temperature">{{ temperature if temperature is not none else "N/A" }} °C</span></p>
-        <p>Влажность: <span id="humidity">{{ humidity if humidity is not none else "N/A" }} %</span></p>
+        <p>Температура: <span id="temperature">{{ temperature|round(2) if temperature is not none else "N/A" }} °C</span></p>
+<p>Влажность: <span id="humidity">{{ humidity|round(2) if humidity is not none else "N/A" }} %</span></p>
     </div>
     <div class="devices">
         {% for device, state in devices.items() %}
@@ -142,5 +169,6 @@
             <p>Не удалось загрузить данные о погоде</p>
         {% endif %}
     </div>
+    <i class="fas fa-moon theme-toggle" onclick="toggleTheme()"></i>
 </body>
 </html>

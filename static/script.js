@@ -15,7 +15,7 @@ function fetchData() {
         });
 }
 
-setInterval(fetchData, 5000); // Обновляем данные каждые 5 секунд для принятия данных о температуре и влажности
+setInterval(fetchData, 5); // Обновляем данные каждые 5 секунд для принятия данных о температуре и влажности
 
 function toggleDevice(device) {
     fetch(`/toggle/${device}`)
